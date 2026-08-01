@@ -9,7 +9,10 @@ VALID_TRANSITIONS: frozenset[tuple[TaskStatus, TaskStatus]] = frozenset({
 
 
 def validate_status_transition(current: TaskStatus, new: TaskStatus) -> None:
-    # Same -> same is invalid. Anything not in VALID_TRANSITIONS is invalid.
+    # No-op updates should be allowed. Only real changes need validation.
+    if current == new:
+        return
+
     if (current, new) not in VALID_TRANSITIONS:
         allowed = sorted({f"{f.value}->{t.value}" for f, t in VALID_TRANSITIONS})
         raise HTTPException(

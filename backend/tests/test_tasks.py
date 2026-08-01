@@ -138,12 +138,13 @@ def test_patch_invalid_transition_todo_to_done_returns_422(client, created_task)
     assert response.status_code == 422
 
 
-def test_patch_same_status_returns_422(client, created_task):
+def test_patch_same_status_returns_200_and_keeps_status(client, created_task):
     response = client.patch(
         f"/tasks/{created_task['id']}",
         json={"status": "ToDo"},
     )
-    assert response.status_code == 422
+    assert response.status_code == 200
+    assert response.json()["status"] == "ToDo"
 
 
 def test_delete_existing_returns_204_no_body(client, created_task):
