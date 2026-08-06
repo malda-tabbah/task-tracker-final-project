@@ -138,6 +138,29 @@ def test_patch_invalid_transition_todo_to_done_returns_422(client, created_task)
     assert response.status_code == 422
 
 
+def test_patch_invalid_transition_done_to_todo_returns_422(client):
+    created = client.post(
+        "/tasks",
+        json={
+            "title": "Completed task",
+            "status": "Done",
+        },
+    )
+    task_id = created.json()["id"]
+
+    response = client.patch(
+        f"/tasks/{task_id}",
+        json={"status": "ToDo"},
+    )
+
+    assert response.status_code == 422
+    body = response.json()
+    assert body["detail"] == (
+        "Invalid status transition from Done to ToDo. "
+        "Allowed transitions: ['Done->InProgress', 'InProgress->Done', 'ToDo->InProgress']"
+    )
+
+
 def test_patch_same_status_returns_200_and_keeps_status(client, created_task):
     response = client.patch(
         f"/tasks/{created_task['id']}",
