@@ -2,50 +2,85 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Project overview
+## 1. Tech stack
 
-Task Tracker (Module 1) — a learning project. FastAPI backend with local JSON
-persistence (`backend/data/tasks.json`, no database), plain HTML/CSS/JS
-frontend with no build step. No auth, no Docker, no CI.
+- Python [VERIFY: 3.11 — not pinned in repo; local venv reports 3.13.14]
+- FastAPI `0.115.0`, Pydantic `2.9.2`, Uvicorn `0.30.6` (`backend/requirements.txt`)
+- pytest `9.1.1`, httpx `0.28.1` (TestClient)
+- python-dotenv `1.0.1`
+- Frontend: vanilla HTML/CSS/JavaScript in `frontend/index.html` (no build step)
 
-## Backend (`backend/`)
+## 2. Run command
 
-FastAPI + Pydantic v2, Python. Entry point: `backend/app/main.py`.
+From `backend/` (venv active):
 
-Setup:
 ```powershell
-cd backend
-py -m venv venv
-.\venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-copy backend\.env.example backend\.env   # if not already present
+uvicorn app.main:app --reload --port 8000
 ```
 
-Run: `uvicorn app.main:app --reload --port 8000` (from `backend/`)
+## 3. Test command
 
-Test: `pytest` (from `backend/`; config in `pytest.ini`, suite is
-`backend/tests/test_tasks.py`). `backend/tests/verify_a.py` is a standalone
-manual script (uses `print`, no assertions) — not part of the pytest suite,
-don't treat failures/output from it as test results.
+From `backend/` (venv active; `pytest.ini` sets `pythonpath = .`):
 
-No lint/formatter is configured for the backend.
+```powershell
+pytest -v
+```
 
-`backend/app/routes.py` and `backend/app/service.py` are empty/unused —
-routes and logic live in `main.py`, `storage.py`, and `business_rules.py`.
-Don't assume code belongs in the empty files just because their names suggest it.
+Suite: `backend/tests/test_tasks.py` (+ `conftest.py`).
+`backend/tests/verify_a.py` is a manual script (prints, no assertions) — not part of the pytest suite.
 
-Status transitions are restricted (`backend/app/business_rules.py`):
-only `todo→in_progress`, `in_progress→done`, and `in_progress→todo` (reopening)
-are valid. Direct `todo→done` or `done→todo` is rejected with a 422.
+## 4. Architecture summary
 
-## Frontend (`frontend/`)
+- **Backend** (`backend/app/`):
+  - `main.py` — FastAPI app, CORS, `/health` and task CRUD routes
+  - `models.py` — `TaskStatus`, `TaskPriority`, `TaskCreate`, `TaskUpdate`, `TaskResponse`
+  - `storage.py` — in-memory task store (`_tasks` dict); `_reset()` for tests
+  - `business_rules.py` — status transition validation
+  - `schemas.py` — `HealthResponse`
+  - `routes.py`, `service.py` — empty/unused; do not assume logic belongs there
+- **Frontend** (`frontend/index.html`) — single-file Task Board UI
+- **Tests** (`backend/tests/`) — pytest + `TestClient`; real storage with autouse reset
+- **Task rules** live in `backend/app/business_rules.py` (enforced on PATCH when `status` is set)
 
-Single file, `frontend/index.html` — inline `<style>`/`<script>`, no
-framework, no package manager, no build step. Open directly or serve with a
-static server.
+Persistence note: README mentions `backend/data/tasks.json`, but current `storage.py` keeps tasks in memory only. [VERIFY if JSON persistence is required for Module 4.]
 
-API base URL is hardcoded: `const API_URL = 'http://localhost:8000'`. Backend
-CORS (`allow_origins` in `backend/app/main.py`) only permits
-`http://localhost:5500`, `http://127.0.0.1:5500`, `http://localhost:5173`, and
-`file://` (`"null"` origin). If serving the frontend from a different
-port/origin, update `allow_origins` in `main.py` to match.
+## 5. Business rules
+
+**Status values** (`models.py`): `ToDo` | `InProgress` | `Done`
+**Priority values**: `Low` | `Medium` | `High`
+
+**Allowed transitions** (`business_rules.py`):
+
+| From | To |
+|---|---|
+| `ToDo` | `InProgress` |
+| `InProgress` | `Done` |
+| `Done` | `InProgress` |
+
+- Same status → same status: allowed (no-op; validation returns early)
+- Any other change (e.g. `ToDo` → `Done`): `422` with detail listing allowed transitions
+- Title: required, non-blank after strip, max 200 chars; unknown fields forbidden (`extra="forbid"`)
+
+## 6. UI states and CORS
+
+**Board states** (`frontend/index.html`, `boardState`): `loading` | `ready` | `empty` | `error`
+
+- Loading: skeleton columns
+- Ready / empty: three columns (`ToDo`, `InProgress`, `Done`); empty columns show “Drop tasks here”
+- Error: error card when fetch fails
+- Drag-and-drop updates status via `PATCH /tasks/{id}`; client mirrors the same allowed transitions; invalid drops show “Invalid status transition.”
+- Create/edit form with title/form error areas; `API_URL = 'http://localhost:8000'`
+
+**CORS** (`main.py` `CORSMiddleware`):
+
+- Origins: `http://localhost:5500`, `http://127.0.0.1:5500`, `http://localhost:5173`, `"null"` (file://)
+- Methods/headers: `*`; `allow_credentials=False`
+- Serving the UI from another origin requires updating `allow_origins`
+
+## 7. Do-not rules
+
+- Do not add authentication
+- Do not add a database
+- Do not add deployment / Docker / CI steps
+- Do not make major UI redesigns without asking
+- Do not invent features, routes, or transition rules not present in the code
