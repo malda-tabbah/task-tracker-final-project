@@ -12,3 +12,8 @@ class HealthResponse(BaseModel):
     """Response returned by GET /health."""
     status: str
     timestamp: str
+
+
+class VersionResponse(BaseModel):
+    """Response returned by GET /version."""
+    version: str

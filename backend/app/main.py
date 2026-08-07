@@ -15,7 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app import storage
 from app.business_rules import validate_status_transition
 from app.models import TaskCreate, TaskPriority, TaskResponse, TaskStatus, TaskUpdate
-from app.schemas import HealthResponse
+from app.schemas import HealthResponse, VersionResponse
 
 # Load variables from .env (falls back to defaults if not present)
 load_dotenv()
@@ -49,6 +49,12 @@ def health_check() -> HealthResponse:
         status="ok",
         timestamp=datetime.now(timezone.utc).isoformat(),
     )
+
+
+@app.get("/version", response_model=VersionResponse)
+def get_version() -> VersionResponse:
+    """Returns the running API version."""
+    return VersionResponse(version=app.version)
 
 
 @app.get("/tasks", response_model=list[TaskResponse], tags=["tasks"])

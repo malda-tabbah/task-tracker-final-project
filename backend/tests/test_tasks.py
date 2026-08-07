@@ -1,3 +1,12 @@
+from app.main import app
+
+
+def test_get_version_returns_200_with_version_string(client):
+    response = client.get("/version")
+    assert response.status_code == 200
+    assert response.json() == {"version": app.version}
+
+
 def test_create_task_valid_returns_201_with_full_body(client):
     response = client.post(
         "/tasks",
