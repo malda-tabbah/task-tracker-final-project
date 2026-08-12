@@ -2,8 +2,8 @@
 
 A learning-project REST API built with FastAPI, implementing task CRUD,
 filtering by status/priority, and forward-only status transitions.
-Persistence is a local JSON file (`backend/data/tasks.json`) — see
-`ADR-001` for the architecture decision. No auth, no database, no
+Persistence is in-memory (`backend/app/storage.py`) — see
+[`docs/ADR-001.md`](docs/ADR-001.md) for the architecture decision. No auth, no database, no
 Docker, no deployment in this module.
 
 ## Project structure
