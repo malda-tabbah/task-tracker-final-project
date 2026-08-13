@@ -53,14 +53,16 @@ The target user remains a solo developer or small team managing work in one shar
 
 The existing architecture remains suitable for the new requirements.
 
-The recommended decision is to keep **Option A: FastAPI with local JSON file storage** as the selected architecture.
+An inconsistency was inspected between this addendum’s original storage assumption and the running application. The draft treated **Option A** as FastAPI with persistent local JSON file storage (`tasks.json`), including a JSON repository that reads and writes that file across restarts. The implemented Task Tracker keeps tasks in an in-memory store for the lifetime of the process only. The approved user stories (US-08 to US-11) require due date, due date change date, overdue detection, and filtering on the shared task list; they do not require data to survive a restart. This addendum resolves the inconsistency by keeping in-memory storage and by not introducing `tasks.json` for the due-date extension.
+
+The recommended decision is to keep **Option A: FastAPI with in-memory storage** as the selected architecture.
 
 The new requirements do not require a major architecture change. They require controlled extensions to the existing:
 
 - task data model
 - Pydantic validation schemas
 - service-layer business rules
-- JSON repository read/write structure
+- in-memory task store
 - filtering and search logic
 - frontend task display and filter controls
 - automated tests
@@ -78,12 +80,10 @@ Pydantic validation
  ↓
 Task service
  ↓
-JSON repository
- ↓
-tasks.json
+In-memory task store
 ```
 
-The overdue flag should not be stored as a permanent field in `tasks.json`.
+The overdue flag should not be stored as a permanent field on the task record.
 
 It should be calculated dynamically by the service layer based on:
 
@@ -92,7 +92,7 @@ current server date > due_date
 AND status is ToDo or InProgress
 ```
 
-The due date change date should be stored because it records a historical event: the last date on which the task due date was changed.
+The due date change date should be stored on the in-memory task record because it records a historical event: the last date on which the task due date was changed. Data in the in-memory store does not survive a process restart.
 
 ## Rationale
 
