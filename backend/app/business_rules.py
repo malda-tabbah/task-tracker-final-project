@@ -1,4 +1,8 @@
+from datetime import date
+from typing import Optional
+
 from fastapi import HTTPException, status
+
 from app.models import TaskStatus
 
 VALID_TRANSITIONS: frozenset[tuple[TaskStatus, TaskStatus]] = frozenset({
@@ -6,6 +10,24 @@ VALID_TRANSITIONS: frozenset[tuple[TaskStatus, TaskStatus]] = frozenset({
     (TaskStatus.IN_PROGRESS, TaskStatus.DONE),
     (TaskStatus.DONE, TaskStatus.IN_PROGRESS),
 })
+
+
+def server_today() -> date:
+    return date.today()
+
+
+def is_overdue(
+    due_date: Optional[date],
+    status: TaskStatus,
+    today: Optional[date] = None,
+) -> bool:
+    if due_date is None:
+        return False
+    if status == TaskStatus.DONE:
+        return False
+    if today is None:
+        today = server_today()
+    return today > due_date and status in (TaskStatus.TODO, TaskStatus.IN_PROGRESS)
 
 
 def validate_status_transition(current: TaskStatus, new: TaskStatus) -> None:
