@@ -5,7 +5,7 @@ and defines the /health endpoint. CRUD routes will be wired
 in here (via app/routes.py) once implemented.
 """
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 import os
 
 from dotenv import load_dotenv
@@ -61,8 +61,19 @@ def get_version() -> VersionResponse:
 def list_tasks(
     status: TaskStatus | None = None,
     priority: TaskPriority | None = None,
+    assignee: str | None = None,
+    due_date: date | None = None,
+    overdue: bool | None = None,
+    title: str | None = None,
 ) -> list[TaskResponse]:
-    return storage.get_all_tasks(status=status, priority=priority)
+    return storage.get_all_tasks(
+        status=status,
+        priority=priority,
+        assignee=assignee,
+        due_date=due_date,
+        overdue=overdue,
+        title=title,
+    )
 
 
 @app.get("/tasks/{task_id}", response_model=TaskResponse, tags=["tasks"])

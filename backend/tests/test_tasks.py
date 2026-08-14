@@ -1,5 +1,21 @@
 from app.main import app
 
+DEFAULT_DUE_DATE = "2026-12-31"
+
+EXPECTED_TASK_KEYS = {
+    "id",
+    "title",
+    "description",
+    "status",
+    "priority",
+    "assignee",
+    "due_date",
+    "due_date_change_date",
+    "overdue",
+    "created_at",
+    "updated_at",
+}
+
 
 def test_get_version_returns_200_with_version_string(client):
     response = client.get("/version")
@@ -16,44 +32,45 @@ def test_create_task_valid_returns_201_with_full_body(client):
             "status": "ToDo",
             "priority": "High",
             "assignee": "alice",
+            "due_date": DEFAULT_DUE_DATE,
         },
     )
     assert response.status_code == 201
     body = response.json()
-    assert set(body.keys()) == {
-        "id",
-        "title",
-        "description",
-        "status",
-        "priority",
-        "assignee",
-        "created_at",
-        "updated_at",
-    }
+    assert set(body.keys()) == EXPECTED_TASK_KEYS
     assert body["title"] == "Buy groceries"
     assert body["description"] == "Milk and eggs"
     assert body["status"] == "ToDo"
     assert body["priority"] == "High"
     assert body["assignee"] == "alice"
+    assert body["due_date"] == DEFAULT_DUE_DATE
+    assert body["due_date_change_date"] is None
+    assert body["overdue"] is False
     assert isinstance(body["id"], str) and body["id"]
     assert body["created_at"]
     assert body["updated_at"]
 
 
 def test_create_task_missing_title_returns_422(client):
-    response = client.post("/tasks", json={"description": "no title"})
+    response = client.post(
+        "/tasks",
+        json={"description": "no title", "due_date": DEFAULT_DUE_DATE},
+    )
     assert response.status_code == 422
 
 
 def test_create_task_blank_title_returns_422(client):
-    response = client.post("/tasks", json={"title": "   "})
+    response = client.post(
+        "/tasks",
+        json={"title": "   ", "due_date": DEFAULT_DUE_DATE},
+    )
     assert response.status_code == 422
 
 
 def test_create_task_invalid_priority_returns_422(client):
     response = client.post(
         "/tasks",
-        json={"title": "task", "priority": "Urgent"},
+        json={"title": "task", "priority": "Urgent", "due_date": DEFAULT_DUE_DATE},
     )
     assert response.status_code == 422
 
@@ -61,7 +78,7 @@ def test_create_task_invalid_priority_returns_422(client):
 def test_create_task_unknown_field_returns_422(client):
     response = client.post(
         "/tasks",
-        json={"title": "task", "unknown_field": "x"},
+        json={"title": "task", "unknown_field": "x", "due_date": DEFAULT_DUE_DATE},
     )
     assert response.status_code == 422
 
@@ -73,16 +90,16 @@ def test_list_tasks_empty_returns_200_and_empty_list(client):
 
 
 def test_list_tasks_filter_by_status_no_match_returns_200_and_empty_list(client):
-    client.post("/tasks", json={"title": "a", "status": "ToDo"})
+    client.post("/tasks", json={"title": "a", "status": "ToDo", "due_date": DEFAULT_DUE_DATE})
     response = client.get("/tasks", params={"status": "Done"})
     assert response.status_code == 200
     assert response.json() == []
 
 
 def test_list_tasks_filter_by_priority_returns_only_matches(client):
-    client.post("/tasks", json={"title": "low", "priority": "Low"})
-    client.post("/tasks", json={"title": "high", "priority": "High"})
-    client.post("/tasks", json={"title": "high-2", "priority": "High"})
+    client.post("/tasks", json={"title": "low", "priority": "Low", "due_date": DEFAULT_DUE_DATE})
+    client.post("/tasks", json={"title": "high", "priority": "High", "due_date": DEFAULT_DUE_DATE})
+    client.post("/tasks", json={"title": "high-2", "priority": "High", "due_date": DEFAULT_DUE_DATE})
 
     response = client.get("/tasks", params={"priority": "High"})
     assert response.status_code == 200
@@ -153,6 +170,7 @@ def test_patch_invalid_transition_done_to_todo_returns_422(client):
         json={
             "title": "Completed task",
             "status": "Done",
+            "due_date": DEFAULT_DUE_DATE,
         },
     )
     task_id = created.json()["id"]
