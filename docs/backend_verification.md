@@ -1,0 +1,84 @@
+# Backend verification (curl)
+
+Manual API checks for the numbered acceptance criteria in `docs/user_stories.md` (US-08 through US-11).
+
+Do not run these as a script. Execute each command one by one and compare the response to the expected result.
+
+## Prerequisites
+
+- API running at `http://localhost:8000` (from `backend/`: `uvicorn app.main:app --reload --port 8000`).
+- On Windows PowerShell, use `curl.exe` (plain `curl` is an alias for `Invoke-WebRequest`).
+- Storage is in-memory. Restarting the API clears all tasks.
+- Server date used below is **2026-08-16**. If you run these on another day, replace that date and the “due today” value with the server’s current date.
+- After each create, copy the returned `id` and paste it where a command says `TASK_ID`, `INPROGRESS_TASK_ID`, or `OVERDUE_ID`.
+
+Optional: append `-w "\nHTTP %{http_code}\n"` to print the HTTP status after the body.
+
+US-01 through US-07 are mentioned in the user-story notes but have no numbered acceptance criteria in that file, so they are not included here.
+
+---
+
+## US-08 — Assign a due date
+
+| User story ID | Acceptance criteria | curl command | Expected response |
+| --- | --- | --- | --- |
+| US-08 | 1. A due date can be provided when creating a task. | `curl.exe -s -X POST http://localhost:8000/tasks -H "Content-Type: application/json" -d '{"title":"US-08 create with due date","due_date":"2026-12-31"}'` | **201**. Body includes `"title": "US-08 create with due date"` and `"due_date": "2026-12-31"`. Save `id` as `TASK_ID`. |
+| US-08 | 2. The due date is stored and displayed when the task is viewed. | `curl.exe -s http://localhost:8000/tasks/TASK_ID` | **200**. Same task; `"due_date": "2026-12-31"` is present. |
+| US-08 | 3. An invalid date format is rejected with a validation error. | `curl.exe -s -X POST http://localhost:8000/tasks -H "Content-Type: application/json" -d '{"title":"US-08 invalid date","due_date":"not-a-date"}'` | **422**. `detail` is a list; `loc` includes `"due_date"`; `msg` says the input is not a valid date. No task is created. |
+| US-08 | 4. If no due date is provided, the task is not created. | `curl.exe -s -X POST http://localhost:8000/tasks -H "Content-Type: application/json" -d '{"title":"US-08 missing due date"}'` | **422**. `detail` includes `type: "missing"`, `loc: ["body","due_date"]`, `msg: "Field required"`. |
+| US-08 | 5. Due date change date is empty when the due date has never been modified after creation. | Use the **201** body from US-08.1, or `curl.exe -s http://localhost:8000/tasks/TASK_ID` | **200**. `"due_date_change_date": null`. |
+
+---
+
+## US-09 — Update a due date
+
+Use the `TASK_ID` saved from US-08.1.
+
+| User story ID | Acceptance criteria | curl command | Expected response |
+| --- | --- | --- | --- |
+| US-09 | 1. A task's due date can be updated after creation. | `curl.exe -s -X PATCH http://localhost:8000/tasks/TASK_ID -H "Content-Type: application/json" -d '{"due_date":"2026-09-01"}'` | **200**. `"due_date": "2026-09-01"`. |
+| US-09 | 2. When the due date is successfully changed, the due date change date is set to the current system date. | Same response as US-09.1 (or repeat that PATCH). | **200**. `"due_date_change_date": "2026-08-16"` (server today). |
+| US-09 | 3. Updating other attributes without changing the due date does not modify the due date change date. | `curl.exe -s -X PATCH http://localhost:8000/tasks/TASK_ID -H "Content-Type: application/json" -d '{"title":"US-09 title only"}'` | **200**. `"title": "US-09 title only"`, `"due_date": "2026-09-01"` unchanged, `"due_date_change_date": "2026-08-16"` unchanged. |
+| US-09 | 4. An invalid due date is rejected; neither date field is updated. | `curl.exe -s -X PATCH http://localhost:8000/tasks/TASK_ID -H "Content-Type: application/json" -d '{"due_date":"14-08-2026"}'` then `curl.exe -s http://localhost:8000/tasks/TASK_ID` | PATCH **422** (`due_date` not a valid date). GET **200**: `"due_date": "2026-09-01"`, `"due_date_change_date": "2026-08-16"`. |
+| US-09 | 5. Updating the due date of a non-existent task returns a not-found error. | `curl.exe -s -X PATCH http://localhost:8000/tasks/00000000-0000-0000-0000-000000000000 -H "Content-Type: application/json" -d '{"due_date":"2026-09-01"}'` | **404**. `{"detail":"Task with id 00000000-0000-0000-0000-000000000000 not found"}` (wording is more specific than the story’s `"Task not found"`). |
+
+---
+
+## US-10 — Identify overdue tasks
+
+| User story ID | Acceptance criteria | curl command | Expected response |
+| --- | --- | --- | --- |
+| US-10 | 1. Overdue when system date is later than due date and status is ToDo or InProgress. | `curl.exe -s -X POST http://localhost:8000/tasks -H "Content-Type: application/json" -d '{"title":"US-10 overdue ToDo","status":"ToDo","due_date":"2026-08-01"}'` then `curl.exe -s -X POST http://localhost:8000/tasks -H "Content-Type: application/json" -d '{"title":"US-10 overdue InProgress","status":"ToDo","due_date":"2026-08-01"}'` then `curl.exe -s -X PATCH http://localhost:8000/tasks/INPROGRESS_TASK_ID -H "Content-Type: application/json" -d '{"status":"InProgress"}'` | Both **201/200**. `"overdue": true` for the ToDo task and for the InProgress task. Save the second `id` as `INPROGRESS_TASK_ID` before the PATCH. |
+| US-10 | 2. A Done task is never overdue, regardless of due date. | `curl.exe -s -X POST http://localhost:8000/tasks -H "Content-Type: application/json" -d '{"title":"US-10 Done past due","status":"Done","due_date":"2026-08-01"}'` | **201**. `"status": "Done"`, `"due_date": "2026-08-01"`, `"overdue": false`. |
+| US-10 | 3. A task with no due date is not possible. | `curl.exe -s -X POST http://localhost:8000/tasks -H "Content-Type: application/json" -d '{"title":"US-10 no due date"}'` | **422**. Same as US-08.4: `due_date` is required. |
+| US-10 | 4. When status changes to Done, overdue is turned off. | `curl.exe -s -X POST http://localhost:8000/tasks -H "Content-Type: application/json" -d '{"title":"US-10 then complete","status":"ToDo","due_date":"2026-08-01"}'` then `curl.exe -s -X PATCH http://localhost:8000/tasks/OVERDUE_ID -H "Content-Type: application/json" -d '{"status":"InProgress"}'` then `curl.exe -s -X PATCH http://localhost:8000/tasks/OVERDUE_ID -H "Content-Type: application/json" -d '{"status":"Done"}'` | Create **201** with `"overdue": true`. First PATCH **200** with `"overdue": true`. Second PATCH **200** with `"status": "Done"` and `"overdue": false`. Direct ToDo → Done is rejected. |
+| US-10 | 5. If the due date is today, the task is not overdue. | `curl.exe -s -X POST http://localhost:8000/tasks -H "Content-Type: application/json" -d '{"title":"US-10 due today","status":"ToDo","due_date":"2026-08-16"}'` | **201**. `"due_date": "2026-08-16"`, `"overdue": false`. |
+
+---
+
+## US-11 — Search and filter
+
+Run these seed commands first so the filters have data:
+
+```powershell
+curl.exe -s -X POST http://localhost:8000/tasks -H "Content-Type: application/json" -d '{"title":"Alice overdue high","assignee":"alice","priority":"High","due_date":"2026-08-01"}'
+curl.exe -s -X POST http://localhost:8000/tasks -H "Content-Type: application/json" -d '{"title":"Alice future high","assignee":"alice","priority":"High","due_date":"2026-08-20"}'
+curl.exe -s -X POST http://localhost:8000/tasks -H "Content-Type: application/json" -d '{"title":"Bob overdue high","assignee":"bob","priority":"High","due_date":"2026-08-01"}'
+curl.exe -s -X POST http://localhost:8000/tasks -H "Content-Type: application/json" -d '{"title":"Prepare Sprint Review","assignee":"alice","due_date":"2026-12-31"}'
+```
+
+| User story ID | Acceptance criteria | curl command | Expected response |
+| --- | --- | --- | --- |
+| US-11 | 1. Tasks can be filtered by due date. | `curl.exe -s "http://localhost:8000/tasks?due_date=2026-08-20"` | **200**. Array of tasks whose `"due_date"` is `"2026-08-20"` only (includes `"Alice future high"`). |
+| US-11 | 2. Tasks can be filtered by overdue status. | `curl.exe -s "http://localhost:8000/tasks?overdue=true"` then `curl.exe -s "http://localhost:8000/tasks?overdue=false"` | **200** both. First: every item has `"overdue": true`. Second: every item has `"overdue": false`. |
+| US-11 | 3. Tasks can be filtered by assignee. | `curl.exe -s "http://localhost:8000/tasks?assignee=alice"` | **200**. Every item has `"assignee": "alice"`. Bob’s task is absent. |
+| US-11 | 4. Tasks can be searched by task title (partial, case-insensitive). | `curl.exe -s "http://localhost:8000/tasks?title=sprint"` | **200**. Includes `"Prepare Sprint Review"`; titles that do not contain `sprint` are absent. |
+| US-11 | 5. If nothing matches, the system returns an empty result. | `curl.exe -s "http://localhost:8000/tasks?assignee=nobody&title=missing"` | **200**. `[]`. The “appropriate message” is UI-only and cannot be verified with curl. |
+
+Optional AND check from the story notes:
+
+```powershell
+curl.exe -s "http://localhost:8000/tasks?assignee=alice&overdue=true&title=overdue"
+```
+
+Expected: **200**, only `"Alice overdue high"`.
