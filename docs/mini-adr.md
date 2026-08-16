@@ -1,11 +1,13 @@
 # ADR-001 Addendum: Due Date, Overdue Logic, and Advanced Filtering
 
-| | |
-| --- | --- |
-| **Status** | Proposed |
-| **Date** | August 13, 2026 |
-| **Decision Owners** | Task Tracker project team |
-| **Project** | Task Tracker learning application |
+
+|                     |                                   |
+| ------------------- | --------------------------------- |
+| **Status**          | Proposed                          |
+| **Date**            | August 13, 2026                   |
+| **Decision Owners** | Task Tracker project team         |
+| **Project**         | Task Tracker learning application |
+
 
 ## Context
 
@@ -55,7 +57,7 @@ The existing architecture remains suitable for the new requirements.
 
 An inconsistency was inspected between this addendum’s original storage assumption and the running application. The draft treated **Option A** as FastAPI with persistent local JSON file storage (`tasks.json`), including a JSON repository that reads and writes that file across restarts. The implemented Task Tracker keeps tasks in an in-memory store for the lifetime of the process only. The approved user stories (US-08 to US-11) require due date, due date change date, overdue detection, and filtering on the shared task list; they do not require data to survive a restart. This addendum resolves the inconsistency by keeping in-memory storage and by not introducing `tasks.json` for the due-date extension.
 
-The recommended decision is to keep **Option A: FastAPI with in-memory storage** as the selected architecture.
+The recommended decision is to keep **Option A: FastAPI with JSON file storage** as the selected architecture.
 
 The new requirements do not require a major architecture change. They require controlled extensions to the existing:
 
@@ -96,23 +98,27 @@ The due date change date should be stored on the in-memory task record because i
 
 ## Rationale
 
+
+
 ### Existing architecture fit
 
 The current architecture fits the new requirements because the extension introduces business rules and additional fields, not a new architectural need.
 
 The new functionality can be handled through the existing layers:
 
-| Requirement | Existing Layer That Can Support It | Required Change |
-| --- | --- | --- |
-| Add due date to task | Pydantic schema, domain model, JSON repository | Add `due_date` field |
-| Validate due date | Pydantic schema | Require valid date format |
-| Reject missing due date on create | Pydantic schema | Make `due_date` required in create request |
-| Track due date change date | Service layer | Update automatically when due date changes |
-| Detect overdue tasks | Service layer | Compute derived overdue flag |
-| Filter by due date | Service layer / repository interface | Add filter parameter |
-| Filter by overdue flag | Service layer | Compute overdue before filtering |
-| Search by task name | Service layer | Add partial, case-insensitive title search |
-| Filter by status, priority, assignee | Existing filtering logic | Extend combined filtering |
+
+| Requirement                          | Existing Layer That Can Support It             | Required Change                            |
+| ------------------------------------ | ---------------------------------------------- | ------------------------------------------ |
+| Add due date to task                 | Pydantic schema, domain model, JSON repository | Add `due_date` field                       |
+| Validate due date                    | Pydantic schema                                | Require valid date format                  |
+| Reject missing due date on create    | Pydantic schema                                | Make `due_date` required in create request |
+| Track due date change date           | Service layer                                  | Update automatically when due date changes |
+| Detect overdue tasks                 | Service layer                                  | Compute derived overdue flag               |
+| Filter by due date                   | Service layer / repository interface           | Add filter parameter                       |
+| Filter by overdue flag               | Service layer                                  | Compute overdue before filtering           |
+| Search by task name                  | Service layer                                  | Add partial, case-insensitive title search |
+| Filter by status, priority, assignee | Existing filtering logic                       | Extend combined filtering                  |
+
 
 No new infrastructure is required.
 
@@ -140,6 +146,8 @@ Tests should cover:
 - searching by task name
 - combining filters using logical AND
 
+
+
 ### Local run/deploy ability
 
 The application remains easy to run locally.
@@ -160,6 +168,8 @@ The stack remains consistent with the current learning objective:
 This allows the developer to focus on REST API design, validation, business rules, filtering, and testing.
 
 ## Architecture
+
+
 
 ### Option A: FastAPI with Local JSON File Storage
 
@@ -183,21 +193,27 @@ JSON Repository
 tasks.json
 ```
 
+
+
 #### Updated data model
 
 The task model should be extended as follows:
 
-| Field | Type | Required | Stored? | Notes |
-| --- | --- | --- | --- | --- |
-| `id` | string or UUID | Yes | Yes | Generated by the system |
-| `title` | string | Yes | Yes | Required, unique, max 50 characters |
-| `description` | string or null | No | Yes | Optional |
-| `status` | enum | Yes | Yes | ToDo, InProgress, Done |
-| `priority` | enum | Yes | Yes | Low, Medium, High |
-| `assignee` | string | Yes | Yes | Required |
-| `due_date` | date | Yes | Yes | Required on create |
-| `due_date_change_date` | date or null | No | Yes | System-generated when due date changes |
-| `overdue` | boolean | No | No | Computed dynamically in response |
+
+| Field                  | Type           | Required | Stored? | Notes                                  |
+| ---------------------- | -------------- | -------- | ------- | -------------------------------------- |
+| `id`                   | string or UUID | Yes      | Yes     | Generated by the system                |
+| `title`                | string         | Yes      | Yes     | Required, unique, max 50 characters    |
+| `description`          | string or null | No       | Yes     | Optional                               |
+| `status`               | enum           | Yes      | Yes     | ToDo, InProgress, Done                 |
+| `priority`             | enum           | Yes      | Yes     | Low, Medium, High                      |
+| `assignee`             | string         | Yes      | Yes     | Required                               |
+| `due_date`             | date           | Yes      | Yes     | Required on create                     |
+| `due_date_change_date` | date or null   | No       | Yes     | System-generated when due date changes |
+| `overdue`              | boolean        | No       | No      | Computed dynamically in response       |
+
+
+
 
 #### Suggested JSON example
 
@@ -230,6 +246,8 @@ The API response may include the computed field:
 }
 ```
 
+
+
 #### Validation changes
 
 Pydantic should validate:
@@ -248,6 +266,8 @@ Pydantic should validate:
   - valid status
   - valid priority
 
+
+
 #### Service-layer changes
 
 The task service should be extended to:
@@ -261,6 +281,8 @@ The task service should be extended to:
 - ensure Done tasks are never returned as overdue
 - support combined filtering using logical AND
 - support partial, case-insensitive task title search
+
+
 
 #### Overdue rule
 
@@ -306,6 +328,8 @@ Suggested processing order:
 5. Apply partial, case-insensitive title search.
 6. Return matching tasks.
 
+
+
 #### Updated folder structure
 
 The existing folder structure can remain unchanged.
@@ -327,8 +351,6 @@ backend/
 │   └── utils/
 │       └── date_utils.py        # optional
 │
-├── storage/
-│   └── tasks.json
 │
 ├── tests/
 │   ├── test_due_date.py
@@ -348,6 +370,8 @@ today()
 is_overdue(task)
 parse_date(value)
 ```
+
+
 
 #### Frontend changes
 
@@ -391,6 +415,8 @@ SQLModel Repository
 SQLite database file
 ```
 
+
+
 #### Why Option B may be considered
 
 Option B may be useful if the learning objective expands to include:
@@ -403,6 +429,8 @@ Option B may be useful if the learning objective expands to include:
 - database-backed filtering
 - more realistic storage patterns
 
+
+
 #### Benefits
 
 Option B provides:
@@ -412,6 +440,8 @@ Option B provides:
 - row-level create, update, and delete operations
 - stronger consistency than manual JSON file writing
 - a good learning bridge toward production-style backend development
+
+
 
 #### Costs
 
@@ -455,6 +485,8 @@ It should be reconsidered only if the project intentionally moves beyond file-ba
 - JSON storage remains less realistic than a database-backed implementation.
 - Combined filters may become harder to maintain if many more filters are added later.
 
+
+
 ### Consequences of Option B
 
 Option B would make filtering and persistence more realistic, but it would also add database and ORM concepts that are not required for the current extension.
@@ -463,19 +495,23 @@ For the current project size, Option B may be more than the application needs.
 
 ## Risks and Mitigations
 
-| Risk | Mitigation |
-| --- | --- |
+
+| Risk                                                                                    | Mitigation                                                                                                             |
+| --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | Requirement conflict: US-08 says due date is required, but the notes say it is optional | Treat due date as required because the acceptance criterion explicitly says missing due date must reject task creation |
-| Inconsistent field naming such as `due_date_change_date` vs `due_date_changed_date` | Choose one field name and use it consistently across model, schema, storage, tests, and frontend |
-| Overdue flag accidentally stored in JSON | Keep overdue as a response-only computed field |
-| Client sends `due_date_change_date` manually | Reject or ignore client-supplied value; only service layer sets it |
-| Due date change date updates when unrelated fields change | Compare old due date with new due date before updating the change date |
-| Done task still appears overdue | Service layer should always return `overdue = false` when status is Done |
-| Current date differs between developer machines | Define date comparison using the backend/server system date |
-| Existing JSON tasks do not contain due date | Add a simple migration/normalization step or handle missing due date safely when reading older data |
-| Combined filters return unexpected results | Define logical AND as the filtering rule and test combinations |
-| Service layer becomes too large | Add a small optional `date_utils.py` helper for date comparison and normalization |
-| Tests modify real task data | Use temporary JSON files during tests |
+| Inconsistent field naming such as `due_date_change_date` vs `due_date_changed_date`     | Choose one field name and use it consistently across model, schema, storage, tests, and frontend                       |
+| Overdue flag accidentally stored in JSON                                                | Keep overdue as a response-only computed field                                                                         |
+| Client sends `due_date_change_date` manually                                            | Reject or ignore client-supplied value; only service layer sets it                                                     |
+| Due date change date updates when unrelated fields change                               | Compare old due date with new due date before updating the change date                                                 |
+| Done task still appears overdue                                                         | Service layer should always return `overdue = false` when status is Done                                               |
+| Current date differs between developer machines                                         | Define date comparison using the backend/server system date                                                            |
+| Existing JSON tasks do not contain due date                                             | Add a simple migration/normalization step or handle missing due date safely when reading older data                    |
+| Combined filters return unexpected results                                              | Define logical AND as the filtering rule and test combinations                                                         |
+| Service layer becomes too large                                                         | Add a small optional `date_utils.py` helper for date comparison and normalization                                      |
+| Tests modify real task data                                                             | Use temporary JSON files during tests                                                                                  |
+
+
+
 
 ## Alternatives Considered
 
@@ -495,6 +531,8 @@ It supports the new requirements with minimal changes:
 - extend JSON persistence
 - add filtering/search logic
 - add tests
+
+
 
 #### Decision
 
@@ -567,8 +605,6 @@ Keep Option B as a future learning path, not as the immediate implementation cho
 
 The following inconsistencies appear in the provided mini-ADR. They are recorded here and are not resolved in this document.
 
-1. **Due date required vs legacy tasks without a due date.** Context and validation state that each task must have a due date, and create must reject a missing due date. The overdue rule and risks also say older stored tasks may have no due date, that such tasks are not overdue, and that missing due dates should be handled safely when reading older data.
+1. **Due date required vs legacy tasks without a due date.** Context and validation state that each task must have a due date, and create must reject a missing due date. The overdue rule and risks also say older stored tasks may have no due date, that such tasks are not overdue, and that missing due dates should be handled safely when reading older data. 
+2. `due_date_change_date` **vs** `due_date_changed_date`**.** The risks table names both field spellings. The data model, JSON examples, validation, and service-layer text in this addendum use `due_date_change_date`. This document does not choose a different name.
 
-2. **US-08 notes vs this addendum.** The risks table says US-08 notes treat due date as optional, then mitigates by treating due date as required. The rest of this addendum consistently treats due date as required on create. This document does not change either statement.
-
-3. **`due_date_change_date` vs `due_date_changed_date`.** The risks table names both field spellings. The data model, JSON examples, validation, and service-layer text in this addendum use `due_date_change_date`. This document does not choose a different name.

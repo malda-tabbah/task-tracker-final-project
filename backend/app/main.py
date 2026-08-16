@@ -24,8 +24,8 @@ APP_ENV = os.getenv("APP_ENV", "development")
 
 app = FastAPI(
     title="Task Tracker API",
-    description="Module 1 learning project — Task Tracker REST API",
-    version="0.1.0",
+    description="Module 1 learning project — Due Date and Filter Feature Extension",
+    version="0.1.1",
 )
 
 app.add_middleware(
