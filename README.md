@@ -4,7 +4,7 @@ A learning-project task board: a FastAPI REST API plus a simple HTML/CSS/JavaScr
 
 This is not production software. There is no authentication, database, Docker, or cloud deployment.
 
-Architecture notes: `[docs/midcourse/mini-adr.md](docs/midcourse/mini-adr.md)`. User stories (US-08 to US-11): `[docs/midcourse/user_stories.md](docs/midcourse/user_stories.md)`.
+Architecture notes: `[docs/midcourse/mini-adr.md](docs/midcourse/mini-adr.md)`. User stories (US-08 to US-11): `[docs/midcourse/user-stories.md](docs/midcourse/user-stories.md)`.
 
 ## Project Report
 
@@ -141,7 +141,7 @@ Windows without activating the venv:
 
 | File                                                                                                                     | Contents                       |
 | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------ |
-| `[docs/midcourse/user_stories.md](docs/midcourse/user_stories.md)`                                                       | Approved extension stories     |
+| `[docs/midcourse/user-stories.md](docs/midcourse/user-stories.md)`                                                       | Approved extension stories     |
 | `[docs/midcourse/mini-adr.md](docs/midcourse/mini-adr.md)`                                                               | Architecture addendum          |
 | `[docs/midcourse/verification.md](docs/midcourse/verification.md)`                                                       | Pytest results                 |
 | `[docs/midcourse/backend_curl_tests_log.md](docs/midcourse/backend_curl_tests_log.md)`                                   | Manual curl checks             |

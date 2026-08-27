@@ -26,8 +26,8 @@ AI helped most when the prompts were structured with:
 
 The Cursor prompts were also useful because they referenced actual project files, which helped the agent produce backend and frontend plans grounded in the project structure:
 
-- `@docs/user_stories.md`
-- `@docs/mini-adr.md`
+- `@docs/midcourse/user-stories.md`
+- `@docs/midcourse/mini-adr.md`
 - `@backend/app/main.py`
 - `@backend/app/models.py`
 
