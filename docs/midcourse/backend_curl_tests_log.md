@@ -92,3 +92,44 @@ curl.exe -s -X POST http://localhost:8000/tasks -H "Content-Type: application/js
 | US-11         | Optional AND: assignee, overdue, and title together.                | `curl.exe -s "http://localhost:8000/tasks?assignee=alice&overdue=true&title=overdue"`                                   | **200**, only `"Alice overdue high"`.                                                               | **FAIL**. HTTP 200; titles were only `"Alice overdue high"`, but 2 rows were returned because leftover seed data from earlier runs remained in memory. Restart the API and seed once for a unique-count check. |
 
 
+---
+
+## `test_tasks.py` regression run (27 August 2026)
+
+Automated pytest after the PATCH null-title fix. Command from `backend/`:
+
+```powershell
+.\venv\Scripts\python.exe -m pytest tests\test_tasks.py -v
+```
+
+**Result: 22 passed, 0 failed.**
+
+These are pytest cases, not curl commands. They are logged here because they re-verify the task update path after the `"title": null` 500 was fixed.
+
+
+| #   | Test                                                                      | Result   |
+| --- | ------------------------------------------------------------------------- | -------- |
+| 1   | `test_get_version_returns_200_with_version_string`                        | **PASS** |
+| 2   | `test_create_task_valid_returns_201_with_full_body`                       | **PASS** |
+| 3   | `test_create_task_missing_title_returns_422`                              | **PASS** |
+| 4   | `test_create_task_blank_title_returns_422`                                | **PASS** |
+| 5   | `test_create_task_invalid_priority_returns_422`                           | **PASS** |
+| 6   | `test_create_task_unknown_field_returns_422`                              | **PASS** |
+| 7   | `test_list_tasks_empty_returns_200_and_empty_list`                        | **PASS** |
+| 8   | `test_list_tasks_filter_by_status_no_match_returns_200_and_empty_list`    | **PASS** |
+| 9   | `test_list_tasks_filter_by_priority_returns_only_matches`                 | **PASS** |
+| 10  | `test_get_task_by_id_returns_task`                                        | **PASS** |
+| 11  | `test_get_task_by_id_not_found_returns_404_with_detail`                   | **PASS** |
+| 12  | `test_patch_partial_update_keeps_other_fields`                            | **PASS** |
+| 13  | `test_patch_null_title_returns_422_and_keeps_original_title`              | **PASS** |
+| 14  | `test_patch_blank_title_returns_422_and_keeps_original_title`             | **PASS** |
+| 15  | `test_patch_empty_title_returns_422_and_keeps_original_title`             | **PASS** |
+| 16  | `test_patch_not_found_returns_404`                                        | **PASS** |
+| 17  | `test_patch_valid_transition_todo_to_inprogress_returns_200`              | **PASS** |
+| 18  | `test_patch_invalid_transition_todo_to_done_returns_422`                  | **PASS** |
+| 19  | `test_patch_invalid_transition_done_to_todo_returns_422`                  | **PASS** |
+| 20  | `test_patch_same_status_returns_200_and_keeps_status`                     | **PASS** |
+| 21  | `test_delete_existing_returns_204_no_body`                                | **PASS** |
+| 22  | `test_delete_missing_returns_404`                                         | **PASS** |
+
+

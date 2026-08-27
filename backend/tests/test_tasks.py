@@ -138,6 +138,51 @@ def test_patch_partial_update_keeps_other_fields(client, created_task):
     assert body["id"] == task_id
 
 
+def test_patch_null_title_returns_422_and_keeps_original_title(client, created_task):
+    task_id = created_task["id"]
+    original_title = created_task["title"]
+
+    response = client.patch(
+        f"/tasks/{task_id}",
+        json={"title": None},
+    )
+    assert response.status_code == 422
+
+    stored = client.get(f"/tasks/{task_id}")
+    assert stored.status_code == 200
+    assert stored.json()["title"] == original_title
+
+
+def test_patch_blank_title_returns_422_and_keeps_original_title(client, created_task):
+    task_id = created_task["id"]
+    original_title = created_task["title"]
+
+    response = client.patch(
+        f"/tasks/{task_id}",
+        json={"title": "   "},
+    )
+    assert response.status_code == 422
+
+    stored = client.get(f"/tasks/{task_id}")
+    assert stored.status_code == 200
+    assert stored.json()["title"] == original_title
+
+
+def test_patch_empty_title_returns_422_and_keeps_original_title(client, created_task):
+    task_id = created_task["id"]
+    original_title = created_task["title"]
+
+    response = client.patch(
+        f"/tasks/{task_id}",
+        json={"title": ""},
+    )
+    assert response.status_code == 422
+
+    stored = client.get(f"/tasks/{task_id}")
+    assert stored.status_code == 200
+    assert stored.json()["title"] == original_title
+
+
 def test_patch_not_found_returns_404(client):
     response = client.patch(
         "/tasks/missing-id",
