@@ -28,9 +28,31 @@ Baseline results recorded:
 - Frontend access was verified by opening `http://localhost:5500/` and confirming that the Kanban board and create/edit flow were visible.
 - The full backend pytest suite was run with `.\venv\Scripts\python.exe -m pytest -v`; result: `48 passed in 1.01s`.
 
+
+
+## Final Submission Repository Structure
+
+The end-course development and verification activities documented below were
+originally performed using the `end-course-project` branch/repository.
+
+Following review feedback, the final public submission was reorganized into
+`task-tracker-final-project` with two branches:
+
+- `mid-course-project` — corrected Mid-Course project and review fixes.
+- `final-project` — Final Project built from the corrected Mid-Course baseline
+and containing the End-Course deliverables.
+
+References below to `end-course-project`, `origin/end-course-project`, and the
+original End-Course GitHub Actions runs are retained as historical evidence of
+the development and verification process.
+
 # Part B - Release Readiness Evidence
 
+
+
 ## B1. CI Workflow
+
+
 
 ### B1.1 Workflow Verification
 
@@ -43,6 +65,8 @@ The `CI` workflow is triggered on every `push` and every `pull_request`. Once tr
 - Test job: `[test](https://github.com/malda-tabbah/task-tracker/actions/runs/32635785571/job/97185221189)`, completed successfully.
 - CI pytest result: `48 passed in 0.27s`.
 - Public repository workflow evidence is also recorded in [service-health-check.md](service-health-check.md), including public `CI` run 2 on `main`, which completed successfully for commit `94d00568c21c2758745c8b05a8ac26e11924d8d3`.
+
+
 
 ### B1.2 Workflow Safety Review
 
@@ -60,6 +84,8 @@ The `CI` workflow is triggered on every `push` and every `pull_request`. Once tr
 | Workflow file located in the wrong folder            | Pass         | The workflow file is located at `.github/workflows/ci.yml`.                               | None. Use `.github/workflows/ci.yml` in evidence references, not the mistyped `.github/workflows/ci.ym`. |
 
 
+
+
 ### B1.3 Intentional Red-Run Evidence
 
 Purpose: confirm that the `CI` workflow fails when pytest detects a failing test, then returns to green after the intentional break is reverted.
@@ -71,6 +97,8 @@ Purpose: confirm that the `CI` workflow fails when pytest detects a failing test
 | Red CI run                   | Commit: `f06dc3032e9101643e7da6ea8f21499a35004da3` (`Intentional CI red run`). Workflow: `[CI` run 12]([https://github.com/malda-tabbah/task-tracker/actions/runs/32646269736](https://github.com/malda-tabbah/task-tracker/actions/runs/32646269736)). Test job: `[test](https://github.com/malda-tabbah/task-tracker/actions/runs/32646269736/job/97210896045)`. | Failed as expected. CI log summary: `FAILED tests/test_intentional_red_run.py::test_intentional_ci_red_run_fails`; result: `1 failed, 48 passed in 0.20s`. |
 | Revert and local green check | Revert commit: `3a081f34a857f0b5a0579ad6adfdc0a979f28fab` (`Revert "Intentional CI red run"`). The temporary failing test file was removed. Command: `.\venv\Scripts\python.exe -m pytest -v`.                                                                                                                                                                     | Local full suite passed after revert: `48 passed in 0.79s`.                                                                                                |
 | Green CI run                 | Workflow: `[CI` run 13]([https://github.com/malda-tabbah/task-tracker/actions/runs/32646325653](https://github.com/malda-tabbah/task-tracker/actions/runs/32646325653)). Test job: `[test](https://github.com/malda-tabbah/task-tracker/actions/runs/32646325653/job/97211032548)`.                                                                                | Completed successfully. CI log summary: `48 passed in 0.27s`.                                                                                              |
+
+
 
 
 ## B2. Docker Image Verification Evidence
@@ -90,6 +118,8 @@ The local Docker image creation and run procedure is documented in [docker-image
 | `.dockerignore` excludes local secrets and non-source artifacts | `.dockerignore` includes `.git`, `.env`, `.env.*`, `venv/`, `.venv/`, `__pycache__/`, and `.pytest_cache/`.                                      | Pass   |
 
 
+
+
 ### B2.2 Local Image and Runtime Evidence
 
 
@@ -101,6 +131,8 @@ The local Docker image creation and run procedure is documented in [docker-image
 | Container exited cleanly                   | Container status showed `Exited (0)`.                                                                                                                                                                                | Pass   |
 | `/health` responded from the container run | `docker logs --tail 50 task-tracker-end-dev` showed multiple `GET /health HTTP/1.1" 200 OK` entries.                                                                                                                 | Pass   |
 | Uvicorn started successfully               | Docker logs showed `Application startup complete` and `Uvicorn running on http://0.0.0.0:8000`.                                                                                                                      | Pass   |
+
+
 
 
 ### B2.3 Docker Log Review and 404 Finding
@@ -129,6 +161,8 @@ INFO:     Finished server process [1]
 | `GET /` returned `404 Not Found`. | The backend does not define a root `/` route; the active API routes include `/health`, `/version`, and `/tasks`. The `172.17.0.1` address is Docker bridge traffic from the host to the container. | Use `http://localhost:8000/health`, `http://localhost:8000/version`, or `http://localhost:8000/docs` for manual checks. If a root landing response is desired, add a small `GET /` route in `backend/app/main.py`, but no application-code change was made for this evidence item. |
 
 
+
+
 ### B2.4 Troubleshooting and Log Commands
 
 
@@ -145,6 +179,8 @@ INFO:     Finished server process [1]
 | Save the last 100 log lines               | `docker logs --tail 100 task-tracker-end-dev *> docker-local-run-tail.log` |
 
 
+
+
 ### B2.5 Docker Safety Log
 
 ```text
@@ -152,6 +188,8 @@ Non-root runtime user: PASS - Dockerfile and image configuration use app.
 Slim pinned base image: PASS - Dockerfile uses python:3.11-slim, not python:latest.
 No baked secrets: PASS - .dockerignore excludes .env files and Dockerfile does not copy secrets.
 ```
+
+
 
 # B3. Documentation Claim Audit
 
@@ -172,3 +210,21 @@ Related technical note for Docker design and documentation claim context: [techn
 | README Python prerequisite says Python 3.11 is the supported course target.                                                                        | `.github/workflows/ci.yml` and `Dockerfile` use Python 3.11. The local virtual environment used during this audit reported Python 3.13.14 while still passing tests from `backend`.                                                                                                                      | **Needs verification: CI and Docker prove Python 3.11; local evidence also shows the suite can pass on this Python 3.13 environment, but 3.13 is not the documented course target.** | No change made. Keep Python 3.11 as the confirmed course/runtime target unless broader version support is intentionally documented.      |
 | Docker run evidence claims `/health` returns HTTP `200`.                                                                                           | `Dockerfile` defines a health check against `http://127.0.0.1:8000/health`; Docker logs in B2 show `GET /health HTTP/1.1" 200 OK`.                                                                                                                                                                       | Pass.                                                                                                                                                                                | None. Keep the Docker `/health` evidence in B2.                                                                                          |
 
+
+
+
+## Final Submission Repository Structure
+
+The end-course development and verification activities documented below were
+originally performed using the `end-course-project` branch/repository.
+
+Following review feedback, the final public submission was reorganized into
+`task-tracker-final-project` with two branches:
+
+- `mid-course-project` — corrected Mid-Course project and review fixes.
+- `final-project` — Final Project built from the corrected Mid-Course baseline
+and containing the End-Course deliverables.
+
+References below to `end-course-project`, `origin/end-course-project`, and the
+original End-Course GitHub Actions runs are retained as historical evidence of
+the development and verification process.
