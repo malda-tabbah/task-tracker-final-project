@@ -58,13 +58,13 @@ the development and verification process.
 
 The `CI` workflow is triggered on every `push` and every `pull_request`. Once triggered, it runs on `ubuntu-latest`, sets up Python 3.11, installs the backend dependencies from `backend/requirements.txt`, and runs the backend test suite with `pytest -v` from the `backend` directory.
 
-- Workflow: `[CI](https://github.com/malda-tabbah/task-tracker/actions/runs/32635785571)`, defined in `.github/workflows/ci.yml`.
-- Trigger: push to `origin/end-course-project`.
-- Pushed commit: `7042ec3c5fbe37be738f31bea262606766231da8` (`Record CI workflow evidence`).
-- Workflow run: `CI` run 10, created at `2026-08-23T11:10:17Z` and completed successfully at `2026-08-23T11:10:32Z`.
-- Test job: `[test](https://github.com/malda-tabbah/task-tracker/actions/runs/32635785571/job/97185221189)`, completed successfully.
-- CI pytest result: `48 passed in 0.27s`.
-- Public repository workflow evidence is also recorded in [service-health-check.md](service-health-check.md), including public `CI` run 2 on `main`, which completed successfully for commit `94d00568c21c2758745c8b05a8ac26e11924d8d3`.
+- Workflow: `[CI](https://github.com/malda-tabbah/task-tracker-final-project/actions/runs/33120225711)`, defined in `.github/workflows/ci.yml`.
+- Trigger: push to `final-project`.
+- Pushed commit: `aa1a21563d82f2ba9d010915a3fa9de6206e7cd7` (`Update final project documentation and repository structure`).
+- Workflow run: `CI` run 3, created at `2026-08-27T21:54Z` and completed successfully (total duration 14s).
+- Test job: `[test](https://github.com/malda-tabbah/task-tracker-final-project/actions/runs/33120225711/job/98684983625)`, completed successfully in 10s.
+- CI pytest result: the job log is not publicly visible without GitHub sign-in; the `test` job succeeded. The suite at this commit contains 51 tests (`test_tasks.py` 22, `test_overdue.py` 12, `test_due_date.py` 10, `test_search_filter.py` 7). The earlier `48 passed in 0.27s` figure was from the old `task-tracker` run 10 and does not apply to this run.
+- Earlier public-repository workflow evidence is also recorded in [service-health-check.md](service-health-check.md), including public `CI` run 2 on `main`, which completed successfully for commit `94d00568c21c2758745c8b05a8ac26e11924d8d3`.
 
 
 
