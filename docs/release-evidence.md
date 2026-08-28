@@ -2,33 +2,83 @@
 
 ## A1. Creating and Verifying the End Project Baseline
 
-Review date: 2026-08-23.
+Review date: 2026-08-23 (original End-Course baseline).  
+Rechecked against the restructured public repository on 2026-08-28.
 
-Baseline preparation evidence is documented in [prepare_end_baseline.md](prepare_end_baseline.md).
+Baseline preparation evidence is documented in
+[prepare_end_baseline.md](prepare_end_baseline.md). That procedure records the
+original End-Course baseline preparation, including the earlier working copy,
+development branch, and initial public End-Course repository.
 
-Summary:
+Following review feedback, the public submission was reorganized into the
+current repository:
+[task-tracker-final-project](https://github.com/malda-tabbah/task-tracker-final-project).
 
-- End-course work was performed from `C:\_Malda\Projects\task-tracker - end`.
-- The active development branch was `end-course-project`.
-- `origin` remained the private development repository.
-- `end-public` was configured as the public end-course repository.
-- The end-course branch was published to `end-public/main` at commit `f3367a9`.
+### Current Repository Baseline
 
-Result: the mid-course project was preserved, and the end-course project was prepared in a separate folder, branch, and public release repository.
+- Local working copy: `C:\_Malda\Projects\task-tracker - end-project`.
+- Current public remote: `final-public`.
+- Public repository: `task-tracker-final-project`.
+- Public branches:
+  - `mid-course-project` at `e5772bd` (`Document PATCH title validation fix and testing`).
+  - `final-project` at `aa1a215` (`Update final project documentation and repository structure`).
+- `mid-course-project` preserves the corrected Mid-Course baseline, including
+the review fixes and PATCH title-validation regression tests.
+- `final-project` was created from the corrected Mid-Course baseline and
+contains the Final Project and End-Course deliverables.
+- The public branch state was verified using
+`git ls-remote --heads final-public`.
+
+**Result:** The corrected Mid-Course project is preserved independently on
+`mid-course-project`, while the Final Project is published on `final-project`
+in the current `task-tracker-final-project` public repository. This establishes
+the corrected Mid-Course state as the baseline from which the Final Project
+submission was built.
 
 ## A2. Verifying Successful Baseline Testing
 
-Verification date: 2026-08-23.
 
-The baseline service health and test procedure is documented in [service-health-check.md](service-health-check.md).
 
-Baseline results recorded:
+## A2. Verifying Successful Baseline Testing
+
+Original verification date: 2026-08-23.  
+Re-verification after Mid-Course corrections and repository restructuring:
+2026-08-27 to 2026-08-28.
+
+The original baseline service health and test procedure is documented in
+[service-health-check.md](service-health-check.md).
+
+### Original Baseline Verification
+
+Before the repository restructuring:
 
 - Backend API startup and `GET /health` were verified successfully.
-- Frontend access was verified by opening `http://localhost:5500/` and confirming that the Kanban board and create/edit flow were visible.
-- The full backend pytest suite was run with `.\venv\Scripts\python.exe -m pytest -v`; result: `48 passed in 1.01s`.
+- Frontend access was verified by opening `http://localhost:5500/` and
+confirming that the Kanban board and create/edit flow were operational.
+- The full backend pytest suite passed with `48 passed in 1.01s`.
 
 
+
+### Current Baseline Re-verification
+
+Following the Mid-Course review corrections and creation of the current
+`mid-course-project` and `final-project` branch structure, the project was
+re-tested from the current working copy.
+
+- The complete backend pytest suite passed with `51 passed in 2.32s`.
+- The additional tests include regression coverage for explicit `null`,
+blank, and empty titles in PATCH requests.
+- Docker image `task-tracker-final:dev` built successfully.
+- Container `task-tracker-final-dev` started successfully and reported healthy.
+- `GET /health` returned `200 OK`.
+- `GET /version` returned `200 OK` with application version `0.1.1`.
+- GitHub Actions CI completed successfully for the `final-project` branch in
+the current `task-tracker-final-project` public repository.
+
+**Result:** The corrected baseline remained functional after the Mid-Course
+review changes and repository restructuring. The expanded 51-test regression
+suite, Docker runtime checks, API health/version checks, and successful CI run
+provide the verified baseline for the Final Project.
 
 ## Final Submission Repository Structure
 
@@ -70,33 +120,53 @@ The `CI` workflow is triggered on every `push` and every `pull_request`. Once tr
 
 ### B1.2 Workflow Safety Review
 
+Review date: 2026-08-28.  
+Reviewed branch: `final-project` at `f50b631`.  
+Public repository: [task-tracker-final-project](https://github.com/malda-tabbah/task-tracker-final-project).  
+Source of truth: `.github/workflows/ci.yml` in the current working copy, with `backend/requirements.txt` and `backend/pytest.ini` inspected for referenced install and test behavior.
 
-| Check                                                | Pass/Concern | Evidence                                                                                  | Minimal fix                                                                                              |
-| ---------------------------------------------------- | ------------ | ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| Missing push or pull_request trigger                 | Pass         | `.github/workflows/ci.yml` defines both `push` and `pull_request`.                        | None.                                                                                                    |
-| Python version not pinned to 3.11                    | Pass         | The workflow uses `actions/setup-python@v5` with `python-version: "3.11"`.                | None.                                                                                                    |
-| Dependencies installed but pytest never runs         | Pass         | The workflow installs dependencies, then runs `pytest -v`.                                | None.                                                                                                    |
-| `continue-on-error` present                          | Pass         | No `continue-on-error` setting is present in the workflow.                                | None.                                                                                                    |
-|                                                      |              | true present                                                                              | Pass                                                                                                     |
-| `--exit-zero` present                                | Pass         | No `--exit-zero` flag is present.                                                         | None.                                                                                                    |
-| Pytest output piped in a way that can hide exit code | Pass         | The workflow runs `pytest -v` directly with no pipe.                                      | None.                                                                                                    |
-| Deployment steps that do not belong in this module   | Pass         | The workflow only checks out code, sets up Python, installs dependencies, and runs tests. | None.                                                                                                    |
-| Workflow file located in the wrong folder            | Pass         | The workflow file is located at `.github/workflows/ci.yml`.                               | None. Use `.github/workflows/ci.yml` in evidence references, not the mistyped `.github/workflows/ci.ym`. |
+This review is a local configuration check of the Final Project workflow. It does not reuse End-Course B1.2 findings. Live GitHub Actions job logs for this commit were not re-opened as part of this check.
+
+| Check | Pass/Concern | Current Repository Evidence | Required Action |
+| ------------------------------------------------ | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- |
+| Both `push` and `pull_request` triggers | Pass | `.github/workflows/ci.yml` `on:` defines `push:` and `pull_request:`. | None. |
+| Python version | Pass | `actions/setup-python@v5` with `python-version: "3.11"`. | None. |
+| Backend dependencies installed | Pass | `pip install -r requirements.txt` runs with `defaults.run.working-directory: backend`, so the file is `backend/requirements.txt` (includes `pytest==9.1.1`). | None. |
+| pytest actually runs | Pass | Step `Run tests` executes `pytest -v` in `backend`. | None. |
+| `continue-on-error` present | Pass | Not present in `.github/workflows/ci.yml`. | None. |
+| `--exit-zero` used | Pass | Not present in the workflow or in `backend/pytest.ini`. | None. |
+| Pytest output piped or wrapped | Pass | `pytest -v` is run directly with no pipe or `|| true`. | None. |
+| Deployment steps in this CI workflow | Pass | Steps are checkout, Python 3.11 setup, dependency install, and pytest only. | None. |
+| Workflow path `.github/workflows/ci.yml` | Pass | The workflow file is at `.github/workflows/ci.yml`. It is the only workflow under `.github/workflows/`. | None. |
+| Other failure-hiding configuration | Pass | Single `test` job; no `if:` skip, `allow_failure`, or pytest `addopts` that would ignore failures. Live Actions logs: not verified in this review. | None. |
+
+**B1.2 result:** PASS. The workflow is test-only and fail-closed on pytest failure. No workflow change is required.
 
 
 
 
 ### B1.3 Intentional Red-Run Evidence
 
-Purpose: confirm that the `CI` workflow fails when pytest detects a failing test, then returns to green after the intentional break is reverted.
+Purpose: confirm that the `CI` workflow in
+[task-tracker-final-project](https://github.com/malda-tabbah/task-tracker-final-project)
+fails when pytest detects a failing test, then returns to green after the
+intentional break is reverted.
+
+Review date: 2026-08-28.  
+Reviewed branch: `final-project`.  
+This red/green pair was performed on the current public repository. Earlier
+End-Course evidence from `malda-tabbah/task-tracker` (48 tests, Actions runs
+12 and 13) is not used as current proof.
 
 
-| Step                         | Evidence                                                                                                                                                                                                                                                                                                                                                           | Result                                                                                                                                                     |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Local break test             | Temporary file: `backend/tests/test_intentional_red_run.py`. Command: `.\venv\Scripts\python.exe -m pytest -v tests/test_intentional_red_run.py`.                                                                                                                                                                                                                  | Failed as intended: `tests/test_intentional_red_run.py::test_intentional_ci_red_run_fails`; result: `1 failed in 3.61s`.                                   |
-| Red CI run                   | Commit: `f06dc3032e9101643e7da6ea8f21499a35004da3` (`Intentional CI red run`). Workflow: `[CI` run 12]([https://github.com/malda-tabbah/task-tracker/actions/runs/32646269736](https://github.com/malda-tabbah/task-tracker/actions/runs/32646269736)). Test job: `[test](https://github.com/malda-tabbah/task-tracker/actions/runs/32646269736/job/97210896045)`. | Failed as expected. CI log summary: `FAILED tests/test_intentional_red_run.py::test_intentional_ci_red_run_fails`; result: `1 failed, 48 passed in 0.20s`. |
-| Revert and local green check | Revert commit: `3a081f34a857f0b5a0579ad6adfdc0a979f28fab` (`Revert "Intentional CI red run"`). The temporary failing test file was removed. Command: `.\venv\Scripts\python.exe -m pytest -v`.                                                                                                                                                                     | Local full suite passed after revert: `48 passed in 0.79s`.                                                                                                |
-| Green CI run                 | Workflow: `[CI` run 13]([https://github.com/malda-tabbah/task-tracker/actions/runs/32646325653](https://github.com/malda-tabbah/task-tracker/actions/runs/32646325653)). Test job: `[test](https://github.com/malda-tabbah/task-tracker/actions/runs/32646325653/job/97211032548)`.                                                                                | Completed successfully. CI log summary: `48 passed in 0.27s`.                                                                                              |
+| Step | Evidence | Result |
+| ---- | -------- | ------ |
+| Local break test | Temporary file: `backend/tests/test_intentional_red_run.py`. Working directory: `backend`. Command: `.\venv\Scripts\python.exe -m pytest -v tests/test_intentional_red_run.py`. | Failed as intended: `tests/test_intentional_red_run.py::test_intentional_ci_red_run_fails`; result: `1 failed in 1.07s`. Local full suite at the same commit: `1 failed, 51 passed in 1.51s`. |
+| Red CI run | Commit: `34a1a60879b2e20e40be545bb855de83b717ce72` (`Intentional CI red run`). Workflow: [CI run 4](https://github.com/malda-tabbah/task-tracker-final-project/actions/runs/33185934234). Test job: [test](https://github.com/malda-tabbah/task-tracker-final-project/actions/runs/33185934234/job/98898821842). | Failed as expected. Public run status: Failure. Annotation: `Process completed with exit code 1`. Job logs are not publicly visible without GitHub sign-in. |
+| Revert and local green check | Revert commit: `1afaa48e93b17c030f140a7294a44b6553971e20` (`Revert "Intentional CI red run"`). The temporary failing test file was removed. Working directory: `backend`. Command: `.\venv\Scripts\python.exe -m pytest -v`. | Local full suite passed after revert: `51 passed in 2.59s`. |
+| Green CI run | Workflow: [CI run 5](https://github.com/malda-tabbah/task-tracker-final-project/actions/runs/33186168149). Test job: [test](https://github.com/malda-tabbah/task-tracker-final-project/actions/runs/33186168149/job/98899604055). Pushed commit: `1afaa48`. | Completed successfully. Public run status: Success (15s). Job logs are not publicly visible without GitHub sign-in. |
+
+**B1.3 result:** PASS. The current `CI` workflow on `final-project` failed when the intentional test failed, and returned to green after the revert.
 
 
 
@@ -211,20 +281,3 @@ Related technical note for Docker design and documentation claim context: [techn
 | Docker run evidence claims `/health` returns HTTP `200`.                                                                                           | `Dockerfile` defines a health check against `http://127.0.0.1:8000/health`; Docker logs in B2 show `GET /health HTTP/1.1" 200 OK`.                                                                                                                                                                       | Pass.                                                                                                                                                                                | None. Keep the Docker `/health` evidence in B2.                                                                                          |
 
 
-
-
-## Final Submission Repository Structure
-
-The end-course development and verification activities documented below were
-originally performed using the `end-course-project` branch/repository.
-
-Following review feedback, the final public submission was reorganized into
-`task-tracker-final-project` with two branches:
-
-- `mid-course-project` — corrected Mid-Course project and review fixes.
-- `final-project` — Final Project built from the corrected Mid-Course baseline
-and containing the End-Course deliverables.
-
-References below to `end-course-project`, `origin/end-course-project`, and the
-original End-Course GitHub Actions runs are retained as historical evidence of
-the development and verification process.
